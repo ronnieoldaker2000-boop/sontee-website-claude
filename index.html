@@ -1,0 +1,1768 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SONTEE — Clothing</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;700;900&family=Bebas+Neue&display=swap" rel="stylesheet">
+  <style>
+    /* ── RESET & TOKENS ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:     #060D1E;
+      --surface:#0A1628;
+      --cream:  #ede4dd;
+      --c50:    rgba(237,228,221,0.5);
+      --c20:    rgba(237,228,221,0.2);
+      --c10:    rgba(237,228,221,0.1);
+      --c06:    rgba(237,228,221,0.06);
+      --c03:    rgba(237,228,221,0.03);
+      --border: rgba(120,160,230,0.12);
+      --spring: cubic-bezier(0.25, 1, 0.5, 1);
+      --out:    cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    html {
+      background: var(--bg);
+      color: var(--cream);
+      font-family: 'Barlow', system-ui, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      scroll-behavior: smooth;
+    }
+
+    body { background: var(--bg); overflow-x: hidden; }
+
+    /* ── GRAIN ── */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      pointer-events: none;
+      opacity: 0.018;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)'/%3E%3C/svg%3E");
+      background-size: 300px 300px;
+      mix-blend-mode: soft-light;
+    }
+
+    /* ── GATE ── */
+    .gate {
+      position: fixed;
+      inset: 0;
+      z-index: 10000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      /* Near-invisible base bg lets mix-blend-mode on logo work correctly */
+      background: rgba(6,13,30,0.01);
+      transition: opacity 0.75s var(--out),
+                  transform 0.75s var(--out);
+    }
+
+    .gate-solid-bg {
+      position: absolute;
+      inset: 0;
+      background: #060D1E;
+    }
+
+    /* FallingPattern canvas — masked so streaks fade at center (keeps form readable) */
+    .gate-canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      -webkit-mask-image: radial-gradient(ellipse 85% 75% at 50% 50%,
+        transparent 0%, black 65%);
+      mask-image: radial-gradient(ellipse 85% 75% at 50% 50%,
+        transparent 0%, black 65%);
+    }
+
+    /* Dot-grid overlay — mirrors the FallingPattern overlay layer */
+    .gate-dot-overlay {
+      position: absolute;
+      inset: 0;
+      background-image: radial-gradient(circle at 50% 50%,
+        transparent 0,
+        transparent 2px,
+        rgba(6,13,30,0.82) 2px);
+      background-size: 8px 8px;
+      backdrop-filter: blur(2px);
+      -webkit-backdrop-filter: blur(2px);
+      -webkit-mask-image: radial-gradient(ellipse 85% 75% at 50% 50%,
+        transparent 0%, black 65%);
+      mask-image: radial-gradient(ellipse 85% 75% at 50% 50%,
+        transparent 0%, black 65%);
+    }
+
+    /* Central glow that stays beneath the form area */
+    .gate-solid-bg {
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 60% 55% at 50% 42%, rgba(26,63,111,0.32) 0%, transparent 60%),
+        #060D1E;
+    }
+
+    .gate.exiting {
+      opacity: 0;
+      transform: scale(1.03);
+      pointer-events: none;
+    }
+
+    .gate-inner {
+      position: relative;
+      /* no z-index → no isolated stacking context, so mix-blend-mode on logo works */
+      width: 100%;
+      max-width: 660px;
+      padding: 0 32px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+
+    .gate-logo {
+      width: clamp(330px, 45vw, 630px);
+      height: auto;
+      display: block;
+      filter: invert(1);
+      mix-blend-mode: screen;
+      user-select: none;
+      margin-bottom: 36px;
+      opacity: 0;
+      animation: fadeUp 1s var(--out) 0.1s forwards;
+    }
+
+    .gate-eyebrow {
+      display: block;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.26em;
+      text-transform: uppercase;
+      color: var(--c50);
+      margin-bottom: 14px;
+      opacity: 0;
+      animation: fadeUp 0.9s var(--out) 0.3s forwards;
+    }
+
+    .gate-headline {
+      font-size: clamp(34px, 5.5vw, 68px);
+      font-weight: 900;
+      line-height: 0.95;
+      letter-spacing: -0.04em;
+      color: var(--cream);
+      margin-bottom: 14px;
+      opacity: 0;
+      animation: fadeUp 0.9s var(--out) 0.28s forwards;
+    }
+
+    .gate-body {
+      font-size: 14px;
+      line-height: 1.75;
+      color: var(--c50);
+      max-width: 360px;
+      margin: 0 auto 36px;
+      opacity: 0;
+      animation: fadeUp 0.9s var(--out) 0.46s forwards;
+    }
+
+    .gate-form {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      opacity: 0;
+      animation: fadeUp 0.9s var(--out) 0.56s forwards;
+    }
+
+    .gate-input {
+      width: 100%;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      padding: 15px 18px;
+      color: var(--cream);
+      font-family: 'Barlow', sans-serif;
+      font-size: 14px;
+      letter-spacing: 0.04em;
+      outline: none;
+      -webkit-appearance: none;
+      transition: border-color 0.25s var(--out),
+                  background 0.25s var(--out);
+    }
+
+    .gate-input:focus {
+      border-color: rgba(120,160,230,0.48);
+      background: rgba(255,255,255,0.07);
+    }
+
+    .gate-input::placeholder { color: var(--c20); }
+
+    .gate-error {
+      font-size: 11px;
+      letter-spacing: 0.04em;
+      color: rgba(255,120,100,0.9);
+      min-height: 16px;
+      text-align: left;
+      padding-left: 2px;
+    }
+
+    /* FloatingActionMenu-inspired button */
+    .gate-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+      padding: 15px 28px;
+      background: rgba(17,17,17,0.65);
+      backdrop-filter: blur(12px) saturate(160%);
+      -webkit-backdrop-filter: blur(12px) saturate(160%);
+      border: 1px solid rgba(237,228,221,0.15);
+      border-radius: 12px;
+      color: var(--cream);
+      font-family: 'Barlow', sans-serif;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      cursor: pointer;
+      box-shadow: 0 0 20px rgba(0,0,0,0.22);
+      /* Exact FloatingActionMenu entrance: initial={opacity:0, x:10, y:10, filter:'blur(10px)'} */
+      opacity: 0;
+      animation: gateFloatIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.72s forwards;
+      transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1),
+                  background 0.2s var(--out),
+                  box-shadow 0.3s var(--out),
+                  filter 0.35s var(--out),
+                  border-color 0.2s var(--out);
+    }
+
+    @keyframes gateFloatIn {
+      from { opacity: 0; transform: translate(10px, 10px); filter: blur(10px); }
+      to   { opacity: 1; transform: translate(0, 0);       filter: blur(0px);  }
+    }
+
+    .gate-btn:hover {
+      background: rgba(17,17,17,0.82);
+      transform: translateY(-2px) scale(1.025);
+      box-shadow: 0 0 30px rgba(0,5,20,0.36);
+      border-color: rgba(237,228,221,0.28);
+    }
+
+    .gate-btn:focus-visible { outline: 2px solid var(--cream); outline-offset: 4px; }
+
+    .gate-btn:active { transform: scale(0.97); }
+
+    .gate-btn-arrow {
+      flex-shrink: 0;
+      transition: transform 0.3s var(--spring);
+    }
+
+    .gate-btn:hover .gate-btn-arrow { transform: translateX(4px); }
+
+    .gate-btn.submitting {
+      pointer-events: none;
+      filter: blur(4px);
+      transform: scale(0.92) translate(4px, 4px);
+      opacity: 0.6;
+    }
+
+    .gate-success {
+      display: none;
+      opacity: 0;
+      animation: fadeUp 0.9s var(--out) 0.1s forwards;
+    }
+
+    .gate-success.visible { display: block; }
+
+    /* ── NAV ── */
+    .site-nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 44px;
+      height: 68px;
+      border-bottom: 1px solid transparent;
+      background: transparent;
+      transition: background 0.5s var(--out),
+                  border-color 0.5s var(--out),
+                  backdrop-filter 0.5s var(--out);
+    }
+
+    .site-nav.scrolled {
+      background: rgba(6,13,30,0.88);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-color: var(--border);
+    }
+
+    /* Nav: brand logo image in a dark pill so inverted PNG bg is hidden */
+    .nav-logo-link {
+      display: flex;
+      align-items: center;
+      flex-shrink: 0;
+      text-decoration: none;
+      background: rgba(0,0,0,0.72);
+      border: 1px solid rgba(255,255,255,0.07);
+      padding: 6px 14px 6px 10px;
+      border-radius: 3px;
+      transition: opacity 0.2s var(--out),
+                  background 0.2s var(--out);
+    }
+
+    .nav-logo-link:hover { background: rgba(0,0,0,0.9); opacity: 1; }
+    .nav-logo-link:focus-visible { outline: 1px solid var(--cream); outline-offset: 4px; }
+
+    .nav-logo-img {
+      height: 22px;
+      width: auto;
+      display: block;
+      filter: invert(1);
+      user-select: none;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 44px;
+      list-style: none;
+    }
+
+    .nav-links a {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--c50);
+      text-decoration: none;
+      transition: color 0.2s var(--out);
+    }
+
+    .nav-links a:hover { color: var(--cream); }
+    .nav-links a:focus-visible { outline: 1px solid var(--cream); outline-offset: 4px; }
+
+    .nav-bag {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--c50);
+      background: none;
+      border: 1px solid var(--border);
+      padding: 9px 22px;
+      cursor: pointer;
+      text-decoration: none;
+      border-radius: 1px;
+      transition: color 0.2s var(--out),
+                  border-color 0.2s var(--out),
+                  background 0.2s var(--out),
+                  transform 0.2s var(--spring);
+    }
+
+    .nav-bag:hover { color: var(--cream); border-color: var(--c20); background: var(--c03); }
+    .nav-bag:focus-visible { outline: 1px solid var(--cream); outline-offset: 4px; }
+    .nav-bag:active { transform: scale(0.97); }
+
+    /* ── HERO ── */
+    #hero {
+      position: relative;
+      height: 100vh;
+      min-height: 640px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    .hero-bg {
+      position: absolute;
+      inset: 0;
+      background: #060D1E;
+    }
+
+    .hero-content {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      padding: 68px 32px 0;
+    }
+
+    .hero-logo {
+      width: clamp(240px, 34vw, 480px);
+      height: auto;
+      display: block;
+      filter: invert(1);
+      mix-blend-mode: screen;
+      user-select: none;
+      margin-bottom: 16px;
+      opacity: 0;
+      transform: translateY(16px);
+      animation: fadeUp 1.2s var(--out) 0.25s forwards;
+    }
+
+    @keyframes fadeUp {
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .gooey-wrapper {
+      position: relative;
+      width: 100vw;
+      height: clamp(88px, 17vw, 220px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 26px;
+    }
+
+    .gooey-layer {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      filter: url(#goo);
+    }
+
+    .gooey-span {
+      position: absolute;
+      left: 0; right: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      text-align: center;
+      font-family: 'Bebas Neue', 'Barlow', sans-serif;
+      font-size: clamp(60px, 14vw, 180px);
+      font-weight: 400;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: var(--cream);
+      white-space: nowrap;
+      user-select: none;
+      line-height: 1;
+      text-rendering: optimizeSpeed;
+    }
+
+    .hero-sub {
+      font-size: clamp(10px, 1.1vw, 13px);
+      font-weight: 400;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      color: var(--c50);
+      opacity: 0;
+      animation: fadeUp 1s var(--out) 1.1s forwards;
+    }
+
+    .scroll-cue {
+      position: absolute;
+      bottom: 36px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      opacity: 0;
+      animation: fadeUp 1s var(--out) 1.8s forwards;
+      padding: 0;
+    }
+
+    .scroll-cue-label {
+      font-size: 9px;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--c50);
+      font-family: 'Barlow', sans-serif;
+    }
+
+    .scroll-cue-line {
+      width: 1px;
+      height: 52px;
+      background: var(--c10);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .scroll-cue-line::after {
+      content: '';
+      position: absolute;
+      top: -100%;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: var(--cream);
+      animation: scrollDrop 2.2s var(--out) infinite;
+    }
+
+    @keyframes scrollDrop {
+      0%   { top: -100%; opacity: 1; }
+      70%  { top: 100%;  opacity: 0.8; }
+      100% { top: 100%;  opacity: 0; }
+    }
+
+    /* ── MARQUEE ── */
+    .marquee-strip {
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+      padding: 15px 0;
+      overflow: hidden;
+    }
+
+    .marquee-inner {
+      display: flex;
+      white-space: nowrap;
+      will-change: transform;
+      animation: marqueeScroll 32s linear infinite;
+    }
+
+    .marquee-item {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--c50);
+      flex-shrink: 0;
+    }
+
+    @keyframes marqueeScroll {
+      from { transform: translateX(0); }
+      to   { transform: translateX(var(--marquee-offset, -50%)); }
+    }
+
+    /* ── SCROLL REVEAL ── */
+    .reveal {
+      opacity: 0;
+      transform: translateY(36px);
+      transition: opacity 0.95s var(--out),
+                  transform 0.95s var(--out);
+      transition-delay: var(--delay, 0ms);
+    }
+
+    .reveal.in { opacity: 1; transform: translateY(0); }
+
+    /* ── COLLECTION ── */
+    #collection {
+      display: grid;
+      grid-template-columns: 260px 1fr;
+      align-items: start;
+      padding-bottom: 72px;
+    }
+
+    .col-main { min-width: 0; padding-top: 112px; }
+
+    .col-inner {
+      max-width: 1300px;
+      margin: 0 auto;
+      padding: 0 40px;
+    }
+
+    /* ── CLOTHING SIDEBAR (FileTree port) ── */
+    .col-sidebar {
+      position: sticky;
+      top: 68px;
+      align-self: start;
+      height: calc(100vh - 68px);
+      overflow-y: auto;
+      overflow-x: hidden;
+      background: rgba(4, 8, 18, 0.98);
+      border-right: 1px solid var(--border);
+      padding: 14px 10px;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(120,160,230,0.18) transparent;
+    }
+
+    .col-sidebar::-webkit-scrollbar { width: 3px; }
+    .col-sidebar::-webkit-scrollbar-track { background: transparent; }
+    .col-sidebar::-webkit-scrollbar-thumb {
+      background: rgba(120,160,230,0.2);
+      border-radius: 2px;
+    }
+
+    /* macOS chrome strip */
+    .tree-header {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      padding: 2px 8px 10px;
+      border-bottom: 1px solid rgba(120,160,230,0.08);
+      margin-bottom: 6px;
+    }
+
+    .tree-dots { display: flex; gap: 5px; }
+
+    .tree-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+
+    .tree-dot.red    { background: oklch(0.65 0.2 25); }
+    .tree-dot.yellow { background: oklch(0.75 0.18 85); }
+    .tree-dot.green  { background: oklch(0.65 0.18 150); }
+
+    .tree-explorer-label {
+      font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+      font-size: 10px;
+      color: rgba(237,228,221,0.25);
+      letter-spacing: 0.1em;
+      margin-left: 10px;
+      text-transform: lowercase;
+    }
+
+    /* Tree nodes */
+    .tree-node { user-select: none; }
+
+    .tree-row {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 8px 4px 0;
+      border-radius: 5px;
+      cursor: pointer;
+      position: relative;
+      transition: background 0.15s ease;
+    }
+
+    .tree-row:hover { background: rgba(120,160,230,0.09); }
+    .tree-row:active { background: rgba(120,160,230,0.15); }
+
+    /* Chevron */
+    .tree-chevron {
+      width: 14px;
+      height: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: transform 0.2s ease;
+      color: rgba(237,228,221,0.28);
+    }
+
+    .tree-chevron svg { width: 6px; height: 8px; }
+    .tree-row.t-open > .tree-chevron { transform: rotate(90deg); }
+
+    /* Spacer where chevron would be (for file rows) */
+    .tree-spacer {
+      width: 14px;
+      flex-shrink: 0;
+    }
+
+    /* Folder icon */
+    .tree-folder-icon {
+      flex-shrink: 0;
+      color: #7aabdc;
+      width: 16px;
+      height: 14px;
+      display: flex;
+      align-items: center;
+      opacity: 0.82;
+      transition: opacity 0.15s ease, transform 0.15s ease;
+    }
+
+    .tree-row:hover .tree-folder-icon { opacity: 1; transform: scale(1.08); }
+
+    /* File symbol (colored glyph) */
+    .tree-file-sym {
+      width: 14px;
+      flex-shrink: 0;
+      text-align: center;
+      font-size: 10px;
+      line-height: 1;
+      transition: transform 0.15s ease;
+    }
+
+    .tree-row:hover .tree-file-sym { transform: scale(1.15); }
+
+    /* File document icon */
+    .tree-file-icon {
+      flex-shrink: 0;
+      width: 12px;
+      height: 14px;
+      display: flex;
+      align-items: center;
+      opacity: 0.55;
+      transition: opacity 0.15s ease;
+    }
+
+    .tree-row:hover .tree-file-icon { opacity: 0.88; }
+
+    /* Label text */
+    .tree-name {
+      font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+      font-size: 11.5px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      transition: color 0.15s ease;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .tree-row.t-folder .tree-name { color: rgba(237,228,221,0.85); }
+    .tree-row.t-file   .tree-name { color: rgba(237,228,221,0.52); }
+    .tree-row:hover    .tree-name { color: var(--cream); }
+
+    /* Hover dot */
+    .tree-dot-hover {
+      position: absolute;
+      right: 8px;
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: rgba(120,160,230,0.8);
+      opacity: 0;
+      transform: scale(0);
+      transition: opacity 0.15s ease, transform 0.2s cubic-bezier(0.34,1.56,0.64,1);
+    }
+
+    .tree-row:hover .tree-dot-hover { opacity: 1; transform: scale(1); }
+
+    /* Children collapse/expand */
+    .tree-children {
+      overflow: hidden;
+      transition: max-height 0.28s ease, opacity 0.22s ease;
+    }
+
+    /* Vertical connector line */
+    .tree-line {
+      position: absolute;
+      top: 0; bottom: 0;
+      width: 1px;
+      background: rgba(120,160,230,0.14);
+    }
+
+    .col-header {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 48px;
+      align-items: end;
+      margin-bottom: 88px;
+    }
+
+    .col-eyebrow {
+      display: block;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--c50);
+      margin-bottom: 18px;
+    }
+
+    .col-title {
+      font-size: clamp(38px, 5.8vw, 80px);
+      font-weight: 900;
+      line-height: 0.91;
+      letter-spacing: -0.04em;
+      color: var(--cream);
+    }
+
+    .col-desc {
+      font-size: 14px;
+      line-height: 1.75;
+      color: var(--c50);
+      max-width: 310px;
+      align-self: end;
+    }
+
+    .cat-row {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      margin-bottom: 28px;
+    }
+
+    .cat-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--c50);
+      white-space: nowrap;
+    }
+
+    .cat-line { flex: 1; height: 1px; background: var(--border); }
+
+    .pgrid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 3px;
+      margin-bottom: 80px;
+    }
+
+    .pcard {
+      position: relative;
+      cursor: pointer;
+      background: var(--surface);
+      isolation: isolate;
+      transition: transform 0.55s var(--spring),
+                  box-shadow 0.55s var(--spring);
+    }
+
+    .pcard:hover {
+      transform: translateY(-6px);
+      box-shadow:
+        0 32px 60px rgba(0,5,20,0.75),
+        0 12px 28px rgba(4,20,65,0.5),
+        0 0 0 1px rgba(100,140,230,0.18);
+    }
+
+    .pcard:focus-visible { outline: 2px solid var(--cream); outline-offset: 2px; }
+
+    .pcard-img-wrap {
+      position: relative;
+      overflow: hidden;
+      aspect-ratio: 3 / 4;
+    }
+
+    .pcard-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: transform 0.85s var(--spring);
+    }
+
+    .pcard:hover .pcard-img { transform: scale(1.07); }
+
+    .pcard-grad {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to top,
+        rgba(6,13,30,0.88) 0%,
+        rgba(6,13,30,0.22) 44%,
+        transparent        68%);
+      opacity: 0;
+      transition: opacity 0.45s var(--out);
+    }
+
+    .pcard:hover .pcard-grad { opacity: 1; }
+
+    .pcard-cta {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      padding: 18px;
+      opacity: 0;
+      transform: translateY(8px);
+      transition: opacity 0.35s var(--out),
+                  transform 0.35s var(--spring);
+    }
+
+    .pcard:hover .pcard-cta { opacity: 1; transform: translateY(0); }
+
+    .atb-btn {
+      width: 100%;
+      padding: 13px 0;
+      background: var(--cream);
+      color: var(--bg);
+      border: none;
+      font-family: 'Barlow', sans-serif;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      cursor: pointer;
+      border-radius: 1px;
+      transition: background 0.2s var(--out),
+                  transform 0.25s var(--spring);
+    }
+
+    .atb-btn:hover { background: #fff; transform: translateY(-2px); }
+    .atb-btn:focus-visible { outline: 2px solid var(--cream); outline-offset: 2px; }
+    .atb-btn:active { transform: translateY(0) scale(0.98); }
+
+    .pcard-info {
+      padding: 15px 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-top: 1px solid var(--border);
+    }
+
+    .pcard-name {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--cream);
+    }
+
+    .pcard-price {
+      font-size: 12px;
+      font-weight: 300;
+      color: var(--c50);
+    }
+
+    /* ── STATEMENT ── */
+    #statement {
+      max-width: 1300px;
+      margin: 0 auto;
+      padding: 100px 44px 112px;
+      border-top: 1px solid var(--border);
+    }
+
+    .stmt-quote {
+      font-size: clamp(34px, 6.5vw, 88px);
+      font-weight: 900;
+      line-height: 0.94;
+      letter-spacing: -0.04em;
+      color: var(--cream);
+      font-style: normal;
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 72px 44px 44px;
+    }
+
+    .foot-grid {
+      max-width: 1300px;
+      margin: 0 auto 64px;
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr 1fr;
+      gap: 56px;
+    }
+
+    .foot-brand-name {
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--cream);
+      margin-bottom: 14px;
+    }
+
+    .foot-brand p {
+      font-size: 13px;
+      line-height: 1.75;
+      color: var(--c50);
+      max-width: 260px;
+    }
+
+    .foot-col-title {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.24em;
+      text-transform: uppercase;
+      color: rgba(237,228,221,0.28);
+      margin-bottom: 18px;
+    }
+
+    .foot-col a {
+      display: block;
+      font-size: 13px;
+      color: var(--c50);
+      text-decoration: none;
+      margin-bottom: 12px;
+      transition: color 0.2s var(--out);
+    }
+
+    .foot-col a:hover { color: var(--cream); }
+    .foot-col a:focus-visible { outline: 1px solid var(--cream); outline-offset: 4px; }
+
+    .foot-bottom {
+      max-width: 1300px;
+      margin: 0 auto;
+      padding-top: 24px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      font-size: 10px;
+      letter-spacing: 0.06em;
+      color: rgba(237,228,221,0.22);
+    }
+
+    /* ── RESPONSIVE ── */
+
+    /* Tablet */
+    @media (max-width: 960px) {
+      #collection { grid-template-columns: 220px 1fr; }
+      .col-header { grid-template-columns: 1fr; }
+      .pgrid { grid-template-columns: repeat(2, 1fr); }
+      .foot-grid { grid-template-columns: 1fr 1fr; }
+      .site-nav { padding: 0 28px; }
+      .col-inner, #statement, footer, .foot-grid, .foot-bottom {
+        padding-left: 24px; padding-right: 24px;
+      }
+    }
+
+    /* Large phone — sidebar goes to a compact strip */
+    @media (max-width: 760px) {
+      #collection {
+        grid-template-columns: 1fr;
+      }
+      .col-sidebar {
+        position: relative;
+        top: 0;
+        height: auto;
+        max-height: 220px;
+        width: 100%;
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+      }
+    }
+
+    @media (max-width: 640px) {
+      .pgrid { grid-template-columns: 1fr; }
+      .nav-links { display: none; }
+      .foot-grid { grid-template-columns: 1fr; }
+      .gate-inner { padding: 0 24px; }
+      .col-header { margin-bottom: 52px; }
+    }
+
+    /* Phone */
+    @media (max-width: 480px) {
+      /* Nav */
+      .site-nav { padding: 0 18px; height: 58px; }
+      .nav-bag  { padding: 7px 14px; font-size: 10px; }
+      .nav-logo-link { padding: 5px 10px 5px 8px; }
+      .nav-logo-img  { height: 19px; }
+
+      /* Gate */
+      .gate-inner   { padding: 0 20px; max-width: 100%; }
+      .gate-logo    { width: min(80vw, 290px); margin-bottom: 28px; }
+      .gate-headline { font-size: clamp(28px, 8.5vw, 40px); }
+      .gate-body    { font-size: 13px; margin-bottom: 22px; }
+      /* 16px prevents iOS Safari auto-zoom on input focus */
+      .gate-input   { font-size: 16px; padding: 14px 16px; }
+      .gate-btn     { padding: 14px 20px; font-size: 11px; border-radius: 10px; }
+
+      /* Hero */
+      .hero-content { padding: 58px 18px 0; }
+      .hero-logo    { width: clamp(200px, 60vw, 300px); margin-bottom: 10px; }
+      .gooey-wrapper { margin-bottom: 18px; }
+      .scroll-cue   { bottom: 20px; }
+
+      /* Sections */
+      .col-inner      { padding: 0 18px; }
+      #collection     { padding: 64px 0 40px; }
+      .col-header     { margin-bottom: 40px; gap: 20px; }
+      .col-title      { font-size: clamp(34px, 9vw, 52px); }
+      .col-desc       { font-size: 13px; max-width: 100%; }
+      .cat-row        { margin-bottom: 16px; }
+      .pgrid          { gap: 2px; margin-bottom: 44px; }
+      #statement      { padding: 56px 18px 72px; }
+      .stmt-quote     { font-size: clamp(28px, 8.5vw, 52px); }
+      footer          { padding: 44px 18px 32px; }
+      .foot-grid      { gap: 28px; margin-bottom: 36px; }
+      .foot-bottom    { flex-direction: column; gap: 6px; align-items: flex-start; }
+
+      /* Marquee */
+      .marquee-item { font-size: 10px; letter-spacing: 0.16em; }
+
+      /* Scroll indicator stays visible */
+      .scroll-cue-line { height: 40px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════
+     GATE — EMAIL CAPTURE (shown before main site)
+═══════════════════════════════════════════════ -->
+<div id="gate" class="gate">
+  <div class="gate-solid-bg"></div>
+  <canvas id="gate-canvas" class="gate-canvas" aria-hidden="true"></canvas>
+  <div class="gate-dot-overlay" aria-hidden="true"></div>
+  <div class="gate-inner">
+
+    <img src="logo.png" class="gate-logo" alt="SONTEE">
+
+    <h1 class="gate-headline">Get in early.</h1>
+    <p class="gate-body">
+      Be the first to know — exclusive drops, early access
+      and discount codes. Or not, we respect your inbox.
+    </p>
+
+    <form id="gate-form" class="gate-form" novalidate>
+      <input id="gate-name"  class="gate-input" type="text"  name="name"
+        placeholder="First name" autocomplete="given-name" required>
+      <input id="gate-email" class="gate-input" type="email" name="email"
+        placeholder="Email address" autocomplete="email" required>
+      <div class="gate-error" id="gate-error" role="alert" aria-live="polite"></div>
+      <button type="submit" class="gate-btn" id="gate-btn">
+        <span id="gate-btn-text">Notify Me</span>
+        <svg class="gate-btn-arrow" width="14" height="14" viewBox="0 0 14 14"
+             fill="none" aria-hidden="true">
+          <path d="M1 7h12M7 1l6 6-6 6"
+                stroke="currentColor" stroke-width="1.5"
+                stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </form>
+
+    <div id="gate-success" class="gate-success">
+      <p class="gate-body" style="margin-bottom:0">
+        You're in, <strong id="gate-success-name" style="color:var(--cream)"></strong>.
+        We'll reach out when something drops.
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- SVG filter: gooey threshold -->
+<svg aria-hidden="true" focusable="false"
+     style="position:absolute;width:0;height:0;overflow:hidden">
+  <defs>
+    <filter id="goo">
+      <feColorMatrix in="SourceGraphic" type="matrix"
+        values="1 0 0 0 0
+                0 1 0 0 0
+                0 0 1 0 0
+                0 0 0 18 -7" />
+    </filter>
+  </defs>
+</svg>
+
+<!-- NAV — logo image in top-left -->
+<nav class="site-nav" id="site-nav">
+  <a href="#" class="nav-logo-link" aria-label="SONTEE — Home">
+    <img src="logo.png" class="nav-logo-img" alt="SONTEE">
+  </a>
+  <ul class="nav-links">
+    <li><a href="#collection">Shop</a></li>
+    <li><a href="#">About</a></li>
+    <li><a href="#">Contact</a></li>
+  </ul>
+  <a href="#" class="nav-bag">Bag (0)</a>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="hero-bg"></div>
+
+  <div class="hero-content">
+    <img src="logo.png" class="hero-logo" alt="SONTEE">
+
+    <div class="gooey-wrapper">
+      <div class="gooey-layer">
+        <span id="gt1" class="gooey-span"></span>
+        <span id="gt2" class="gooey-span"></span>
+      </div>
+    </div>
+
+    <p class="hero-sub">Spring &nbsp;/&nbsp; Summer 2026</p>
+  </div>
+
+  <button class="scroll-cue"
+    onclick="document.getElementById('collection').scrollIntoView({behavior:'smooth'})"
+    aria-label="Scroll to collection">
+    <span class="scroll-cue-label">Scroll</span>
+    <div class="scroll-cue-line"></div>
+  </button>
+</section>
+
+<!-- MARQUEE — cloned by JS to be truly seamless -->
+<div class="marquee-strip" aria-hidden="true">
+  <div class="marquee-inner" id="marquee-inner">
+    <span class="marquee-item">SONTEE &nbsp;—&nbsp; SPRING SUMMER 2026 &nbsp;—&nbsp; NEW COLLECTION &nbsp;—&nbsp; WEAR YOUR TRUTH &nbsp;—&nbsp; MINIMAL. MODERN. INTENTIONAL. &nbsp;—&nbsp;&nbsp;</span>
+  </div>
+</div>
+
+<!-- COLLECTION -->
+<section id="collection">
+
+  <!-- ── LEFT SIDEBAR: Clothing Explorer (FileTree) ── -->
+  <aside class="col-sidebar">
+    <div class="tree-header">
+      <div class="tree-dots">
+        <div class="tree-dot red"></div>
+        <div class="tree-dot yellow"></div>
+        <div class="tree-dot green"></div>
+      </div>
+      <span class="tree-explorer-label">explorer</span>
+    </div>
+    <div id="clothing-tree"></div>
+  </aside>
+
+  <!-- ── MAIN CONTENT ── -->
+  <div class="col-main">
+  <div class="col-inner">
+
+    <div class="col-header reveal">
+      <div>
+        <span class="col-eyebrow">— The Collection</span>
+        <h2 class="col-title">Minimal.<br>Modern.<br>Intentional.</h2>
+      </div>
+      <p class="col-desc">Each piece is designed with restraint — considered materials, clean silhouettes, built to outlast the season.</p>
+    </div>
+
+    <!-- T-SHIRTS -->
+    <div class="cat-row reveal">
+      <span class="cat-label">T-Shirts</span>
+      <div class="cat-line"></div>
+      <span class="cat-label">3 Styles</span>
+    </div>
+
+    <div class="pgrid">
+      <div class="pcard reveal" style="--delay:0ms" tabindex="0">
+        <div class="pcard-img-wrap">
+          <img class="pcard-img" src="https://placehold.co/400x530/0d0d0d/ede4dd?text=" alt="Obsidian Tee">
+          <div class="pcard-grad"></div>
+          <div class="pcard-cta"><button class="atb-btn">Add to Bag</button></div>
+        </div>
+        <div class="pcard-info">
+          <span class="pcard-name">Obsidian Tee</span>
+          <span class="pcard-price">$45</span>
+        </div>
+      </div>
+
+      <div class="pcard reveal" style="--delay:110ms" tabindex="0">
+        <div class="pcard-img-wrap">
+          <img class="pcard-img" src="https://placehold.co/400x530/ede4dd/0d0d0d?text=" alt="Ivory Tee">
+          <div class="pcard-grad"></div>
+          <div class="pcard-cta"><button class="atb-btn">Add to Bag</button></div>
+        </div>
+        <div class="pcard-info">
+          <span class="pcard-name">Ivory Tee</span>
+          <span class="pcard-price">$45</span>
+        </div>
+      </div>
+
+      <div class="pcard reveal" style="--delay:220ms" tabindex="0">
+        <div class="pcard-img-wrap">
+          <img class="pcard-img" src="https://placehold.co/400x530/252525/ede4dd?text=" alt="Ash Tee">
+          <div class="pcard-grad"></div>
+          <div class="pcard-cta"><button class="atb-btn">Add to Bag</button></div>
+        </div>
+        <div class="pcard-info">
+          <span class="pcard-name">Ash Tee</span>
+          <span class="pcard-price">$45</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- HOODIES -->
+    <div class="cat-row reveal">
+      <span class="cat-label">Hoodies</span>
+      <div class="cat-line"></div>
+      <span class="cat-label">3 Styles</span>
+    </div>
+
+    <div class="pgrid">
+      <div class="pcard reveal" style="--delay:0ms" tabindex="0">
+        <div class="pcard-img-wrap">
+          <img class="pcard-img" src="https://placehold.co/400x530/060606/ede4dd?text=" alt="Void Hoodie">
+          <div class="pcard-grad"></div>
+          <div class="pcard-cta"><button class="atb-btn">Add to Bag</button></div>
+        </div>
+        <div class="pcard-info">
+          <span class="pcard-name">Void Hoodie</span>
+          <span class="pcard-price">$120</span>
+        </div>
+      </div>
+
+      <div class="pcard reveal" style="--delay:110ms" tabindex="0">
+        <div class="pcard-img-wrap">
+          <img class="pcard-img" src="https://placehold.co/400x530/b5b2ad/0d0d0d?text=" alt="Stone Hoodie">
+          <div class="pcard-grad"></div>
+          <div class="pcard-cta"><button class="atb-btn">Add to Bag</button></div>
+        </div>
+        <div class="pcard-info">
+          <span class="pcard-name">Stone Hoodie</span>
+          <span class="pcard-price">$120</span>
+        </div>
+      </div>
+
+      <div class="pcard reveal" style="--delay:220ms" tabindex="0">
+        <div class="pcard-img-wrap">
+          <img class="pcard-img" src="https://placehold.co/400x530/1c1c1c/ede4dd?text=" alt="Dusk Hoodie">
+          <div class="pcard-grad"></div>
+          <div class="pcard-cta"><button class="atb-btn">Add to Bag</button></div>
+        </div>
+        <div class="pcard-info">
+          <span class="pcard-name">Dusk Hoodie</span>
+          <span class="pcard-price">$120</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- TRACK PANTS -->
+    <div class="cat-row reveal">
+      <span class="cat-label">Track Pants</span>
+      <div class="cat-line"></div>
+      <span class="cat-label">3 Styles</span>
+    </div>
+
+    <div class="pgrid">
+      <div class="pcard reveal" style="--delay:0ms" tabindex="0">
+        <div class="pcard-img-wrap">
+          <img class="pcard-img" src="https://placehold.co/400x530/040912/ede4dd?text=" alt="Void Track Pant">
+          <div class="pcard-grad"></div>
+          <div class="pcard-cta"><button class="atb-btn">Add to Bag</button></div>
+        </div>
+        <div class="pcard-info">
+          <span class="pcard-name">Void Track Pant</span>
+          <span class="pcard-price">$95</span>
+        </div>
+      </div>
+
+      <div class="pcard reveal" style="--delay:110ms" tabindex="0">
+        <div class="pcard-img-wrap">
+          <img class="pcard-img" src="https://placehold.co/400x530/cccac5/0a0a0a?text=" alt="Stone Track Pant">
+          <div class="pcard-grad"></div>
+          <div class="pcard-cta"><button class="atb-btn">Add to Bag</button></div>
+        </div>
+        <div class="pcard-info">
+          <span class="pcard-name">Stone Track Pant</span>
+          <span class="pcard-price">$95</span>
+        </div>
+      </div>
+
+      <div class="pcard reveal" style="--delay:220ms" tabindex="0">
+        <div class="pcard-img-wrap">
+          <img class="pcard-img" src="https://placehold.co/400x530/1e2a3a/ede4dd?text=" alt="Navy Track Pant">
+          <div class="pcard-grad"></div>
+          <div class="pcard-cta"><button class="atb-btn">Add to Bag</button></div>
+        </div>
+        <div class="pcard-info">
+          <span class="pcard-name">Navy Track Pant</span>
+          <span class="pcard-price">$95</span>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /col-inner -->
+  </div><!-- /col-main -->
+
+</section>
+
+<!-- STATEMENT -->
+<div id="statement">
+  <blockquote class="stmt-quote reveal">
+    Made to be worn.<br>Or judged.<br>Or both.
+  </blockquote>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="foot-grid">
+    <div class="foot-brand">
+      <div class="foot-brand-name">SONTEE</div>
+      <p>Minimal clothing for the intentional wearer. Designed with restraint, made to last. Spring / Summer 2026.</p>
+    </div>
+    <div class="foot-col">
+      <div class="foot-col-title">Shop</div>
+      <a href="#">T-Shirts</a>
+      <a href="#">Hoodies</a>
+      <a href="#">Track Pants</a>
+      <a href="#">All Products</a>
+    </div>
+    <div class="foot-col">
+      <div class="foot-col-title">Info</div>
+      <a href="#">About</a>
+      <a href="#">Lookbook</a>
+      <a href="#">Stockists</a>
+      <a href="#">Sustainability</a>
+    </div>
+    <div class="foot-col">
+      <div class="foot-col-title">Help</div>
+      <a href="#">Shipping</a>
+      <a href="#">Returns</a>
+      <a href="#">FAQ</a>
+      <a href="#">Contact</a>
+    </div>
+  </div>
+  <div class="foot-bottom">
+    <span>© 2026 SONTEE. All rights reserved.</span>
+    <span>Privacy · Terms</span>
+  </div>
+</footer>
+
+<script>
+/* ── GATE: FALLING PATTERN (port of FallingPattern component) ── */
+(function () {
+  var canvas = document.getElementById('gate-canvas');
+  if (!canvas) return;
+  var ctx = canvas.getContext('2d');
+
+  function resize() {
+    canvas.width  = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize, { passive: true });
+
+  /* Each streak: a vertical glowing line with a bright head dot */
+  var COUNT = 65;
+  var streaks = [];
+
+  function makeStreak(spread) {
+    return {
+      x:       Math.random() * (canvas.width + 120) - 60,
+      y:       spread ? Math.random() * canvas.height : -(60 + Math.random() * canvas.height * 0.5),
+      len:     70 + Math.random() * 120,
+      speed:   0.25 + Math.random() * 0.55,
+      opacity: 0.18 + Math.random() * 0.28,
+      width:   0.8 + Math.random() * 0.9,
+      /* slight colour variation — blue range */
+      r: 65  + Math.floor(Math.random() * 55),
+      g: 105 + Math.floor(Math.random() * 60),
+      b: 210 + Math.floor(Math.random() * 45),
+    };
+  }
+
+  for (var i = 0; i < COUNT; i++) streaks.push(makeStreak(true));
+
+  function drawFrame() {
+    /* Stop when gate is hidden to save resources */
+    var gate = document.getElementById('gate');
+    if (!gate || gate.style.display === 'none') return;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    for (var i = 0; i < COUNT; i++) {
+      var s = streaks[i];
+
+      /* Vertical line — fade in at top, full in middle, fade at tail */
+      var grad = ctx.createLinearGradient(s.x, s.y, s.x, s.y + s.len);
+      grad.addColorStop(0,    'rgba(' + s.r + ',' + s.g + ',' + s.b + ',0)');
+      grad.addColorStop(0.25, 'rgba(' + s.r + ',' + s.g + ',' + s.b + ',' + (s.opacity * 0.6) + ')');
+      grad.addColorStop(0.6,  'rgba(' + s.r + ',' + s.g + ',' + s.b + ',' + s.opacity + ')');
+      grad.addColorStop(1,    'rgba(' + s.r + ',' + s.g + ',' + s.b + ',0)');
+
+      ctx.beginPath();
+      ctx.moveTo(s.x, s.y);
+      ctx.lineTo(s.x, s.y + s.len);
+      ctx.strokeStyle = grad;
+      ctx.lineWidth   = s.width;
+      ctx.stroke();
+
+      /* Bright dot at head of streak — mirrors the 1.5px dots in FallingPattern */
+      ctx.beginPath();
+      ctx.arc(s.x, s.y + s.len * 0.22, 1.5, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(237,228,221,' + Math.min(s.opacity * 2.2, 0.65) + ')';
+      ctx.fill();
+
+      s.y += s.speed;
+      if (s.y > canvas.height + s.len + 20) streaks[i] = makeStreak(false);
+    }
+
+    requestAnimationFrame(drawFrame);
+  }
+
+  requestAnimationFrame(drawFrame);
+}());
+
+/* ── GATE: EMAIL CAPTURE ── */
+(function () {
+  var form      = document.getElementById('gate-form');
+  var nameEl    = document.getElementById('gate-name');
+  var emailEl   = document.getElementById('gate-email');
+  var btn       = document.getElementById('gate-btn');
+  var btnText   = document.getElementById('gate-btn-text');
+  var errorEl   = document.getElementById('gate-error');
+  var successEl = document.getElementById('gate-success');
+  var successName = document.getElementById('gate-success-name');
+
+  function showSuccess(name) {
+    form.style.display = 'none';
+    successName.textContent = name.split(' ')[0];
+    successEl.classList.add('visible');
+  }
+
+  /* Already subscribed — show success without re-submitting */
+  try {
+    var prev = JSON.parse(localStorage.getItem('sontee_sub') || 'null');
+    if (prev) { showSuccess(prev.name); return; }
+  } catch (e) {}
+
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    errorEl.textContent = '';
+
+    var name  = nameEl.value.trim();
+    var email = emailEl.value.trim();
+
+    if (!name) { errorEl.textContent = 'Please enter your first name.'; nameEl.focus(); return; }
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      errorEl.textContent = 'Please enter a valid email address.'; emailEl.focus(); return;
+    }
+
+    btn.classList.add('submitting');
+    btnText.textContent = 'Joining…';
+
+    fetch('/api/subscribe', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: name, email: email })
+    })
+    .then(function (r) { return r.json(); })
+    .then(function (d) {
+      if (d.ok) {
+        try { localStorage.setItem('sontee_sub', JSON.stringify({ name: name, email: email, ts: Date.now() })); } catch (e) {}
+        showSuccess(name);
+      } else if (d.msg === 'already_registered') {
+        errorEl.textContent = "You're already on the list!";
+        btn.classList.remove('submitting');
+        btnText.textContent = 'Notify Me';
+      } else {
+        errorEl.textContent = d.msg || 'Something went wrong. Please try again.';
+        btn.classList.remove('submitting');
+        btnText.textContent = 'Notify Me';
+      }
+    })
+    .catch(function () {
+      errorEl.textContent = 'Could not connect. Please try again.';
+      btn.classList.remove('submitting');
+      btnText.textContent = 'Notify Me';
+    });
+  });
+}());
+
+/* ── MARQUEE: JS clone to guarantee seamless loop ── */
+(function () {
+  var inner = document.getElementById('marquee-inner');
+  if (!inner) return;
+  var seed = inner.innerHTML;
+  /* Clone until container is at least 6× the viewport width (covers all screens) */
+  var copies = 1;
+  while (copies < 12) {
+    inner.innerHTML += seed;
+    copies++;
+    /* Stop if we estimate we're past 6× viewport width */
+    if (inner.childElementCount >= 2 && inner.scrollWidth > window.innerWidth * 5) break;
+  }
+  /* Set the CSS variable so we translate exactly one "seed" worth */
+  var oneItem = inner.children[0];
+  var fraction = (1 / inner.children.length) * 100;
+  inner.style.setProperty('--marquee-offset', '-' + fraction.toFixed(6) + '%');
+}());
+
+/* ── CLOTHING FILE TREE (FileTree port) ── */
+(function () {
+  /* Icon map for clothing types — mirrors getFileIcon() from the component */
+  var ICONS = {
+    tee:    { sym: '◈', color: 'rgba(237,220,195,0.85)' },
+    hoodie: { sym: '◆', color: 'rgba(100,148,222,0.85)' },
+    pants:  { sym: '◇', color: 'rgba(165,188,218,0.75)' },
+    season: { sym: '★', color: 'rgba(200,172,90,0.80)' },
+    info:   { sym: '◊', color: 'rgba(237,228,221,0.45)' },
+  };
+
+  /* Clothing catalogue — replaces the code file structure from the demo */
+  var CATALOGUE = [
+    {
+      name: 'SONTEE', type: 'folder', open: true,
+      children: [
+        {
+          name: 'T-Shirts', type: 'folder', open: true,
+          children: [
+            { name: 'Obsidian Tee',  type: 'file', tag: 'tee' },
+            { name: 'Ivory Tee',     type: 'file', tag: 'tee' },
+            { name: 'Ash Tee',       type: 'file', tag: 'tee' },
+          ]
+        },
+        {
+          name: 'Hoodies', type: 'folder', open: true,
+          children: [
+            { name: 'Void Hoodie',  type: 'file', tag: 'hoodie' },
+            { name: 'Stone Hoodie', type: 'file', tag: 'hoodie' },
+            { name: 'Dusk Hoodie',  type: 'file', tag: 'hoodie' },
+          ]
+        },
+        {
+          name: 'Track Pants', type: 'folder', open: true,
+          children: [
+            { name: 'Void Track Pant',  type: 'file', tag: 'pants' },
+            { name: 'Stone Track Pant', type: 'file', tag: 'pants' },
+            { name: 'Navy Track Pant',  type: 'file', tag: 'pants' },
+          ]
+        },
+        {
+          name: 'SS26', type: 'folder', open: false,
+          children: [
+            { name: 'New Arrivals',  type: 'file', tag: 'season' },
+            { name: 'Lookbook',      type: 'file', tag: 'info' },
+            { name: 'Sustainability',type: 'file', tag: 'info' },
+          ]
+        }
+      ]
+    }
+  ];
+
+  /* SVG snippets */
+  var SVG_FOLDER = '<svg viewBox="0 0 16 14" fill="currentColor" width="16" height="14">' +
+    '<path d="M1.5 1C.67 1 0 1.67 0 2.5v9C0 12.33.67 13 1.5 13h13c.83 0 1.5-.67 1.5-1.5V4.5C16 3.67 15.33 3 14.5 3H8L6.5 1H1.5Z"/></svg>';
+
+  var SVG_FILE = '<svg viewBox="0 0 14 16" fill="currentColor" width="12" height="14">' +
+    '<path d="M1.5 0C.67 0 0 .67 0 1.5v13C0 15.33.67 16 1.5 16h11c.83 0 1.5-.67 1.5-1.5V4.5L9.5 0H1.5Z"/>' +
+    '<path d="M9 0v4.5H14" fill-opacity="0.45"/></svg>';
+
+  var SVG_CHEVRON = '<svg viewBox="0 0 6 8" fill="none" stroke="currentColor" ' +
+    'stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" width="6" height="8">' +
+    '<path d="M1 1l4 3-4 3"/></svg>';
+
+  function buildNode(node, depth) {
+    var wrap = document.createElement('div');
+    wrap.className = 'tree-node';
+
+    var pl = depth * 16 + 6;
+
+    if (node.type === 'folder') {
+      var isOpen = node.open !== false;
+
+      /* Row */
+      var row = document.createElement('div');
+      row.className = 'tree-row t-folder' + (isOpen ? ' t-open' : '');
+      row.style.paddingLeft = pl + 'px';
+      row.innerHTML =
+        (depth > 0 ? '<div class="tree-line" style="left:' + ((depth - 1) * 16 + 13) + 'px"></div>' : '') +
+        '<div class="tree-chevron">' + SVG_CHEVRON + '</div>' +
+        '<div class="tree-folder-icon">' + SVG_FOLDER + '</div>' +
+        '<span class="tree-name">' + node.name + '</span>' +
+        '<div class="tree-dot-hover"></div>';
+
+      /* Children container */
+      var kids = document.createElement('div');
+      kids.className = 'tree-children';
+      if (!isOpen) {
+        kids.style.maxHeight = '0';
+        kids.style.opacity = '0';
+      } else {
+        kids.style.maxHeight = '2000px';
+        kids.style.opacity = '1';
+      }
+
+      (node.children || []).forEach(function (child) {
+        kids.appendChild(buildNode(child, depth + 1));
+      });
+
+      /* Toggle on click */
+      row.addEventListener('click', function () {
+        var open = row.classList.toggle('t-open');
+        if (open) {
+          kids.style.maxHeight = '2000px';
+          kids.style.opacity = '1';
+        } else {
+          kids.style.maxHeight = '0';
+          kids.style.opacity = '0';
+        }
+      });
+
+      wrap.appendChild(row);
+      wrap.appendChild(kids);
+
+    } else {
+      var ic = ICONS[node.tag] || ICONS.info;
+
+      var row = document.createElement('div');
+      row.className = 'tree-row t-file';
+      row.style.paddingLeft = pl + 'px';
+      row.innerHTML =
+        (depth > 0 ? '<div class="tree-line" style="left:' + ((depth - 1) * 16 + 13) + 'px"></div>' : '') +
+        '<div class="tree-spacer"></div>' +
+        '<div class="tree-file-sym" style="color:' + ic.color + '">' + ic.sym + '</div>' +
+        '<div class="tree-file-icon" style="color:' + ic.color + '">' + SVG_FILE + '</div>' +
+        '<span class="tree-name">' + node.name + '</span>' +
+        '<div class="tree-dot-hover"></div>';
+
+      wrap.appendChild(row);
+    }
+
+    return wrap;
+  }
+
+  var root = document.getElementById('clothing-tree');
+  if (root) {
+    CATALOGUE.forEach(function (node) {
+      root.appendChild(buildNode(node, 0));
+    });
+  }
+}());
+
+/* ── GOOEY TEXT MORPH ── */
+(function () {
+  var texts        = ['SONTEE', 'Clothing'];
+  var morphTime    = 1.6;
+  var cooldownTime = 3.0;
+
+  var t1 = document.getElementById('gt1');
+  var t2 = document.getElementById('gt2');
+
+  t1.textContent   = texts[texts.length - 1];
+  t2.textContent   = texts[0];
+  t1.style.opacity = '0';
+  t2.style.opacity = '1';
+
+  var textIndex = texts.length - 1;
+  var lastTime  = performance.now();
+  var morph     = 0;
+  var cooldown  = cooldownTime;
+
+  function setMorph(f) {
+    t2.style.filter  = 'blur(' + Math.min(8 / f - 8, 100) + 'px)';
+    t2.style.opacity = (Math.pow(f, 0.4) * 100) + '%';
+    var inv = 1 - f;
+    t1.style.filter  = 'blur(' + Math.min(8 / inv - 8, 100) + 'px)';
+    t1.style.opacity = (Math.pow(inv, 0.4) * 100) + '%';
+  }
+
+  function doCooldown() {
+    morph            = 0;
+    t2.style.filter  = '';
+    t2.style.opacity = '100%';
+    t1.style.filter  = '';
+    t1.style.opacity = '0%';
+  }
+
+  function doMorph() {
+    morph -= cooldown;
+    cooldown = 0;
+    var f = morph / morphTime;
+    if (f > 1) { cooldown = cooldownTime; f = 1; }
+    setMorph(f);
+  }
+
+  function animate(now) {
+    requestAnimationFrame(animate);
+    var dt = (now - lastTime) / 1000;
+    lastTime = now;
+    var shouldIncrement = cooldown > 0;
+    cooldown -= dt;
+    if (cooldown <= 0) {
+      if (shouldIncrement) {
+        textIndex      = (textIndex + 1) % texts.length;
+        t1.textContent = texts[textIndex % texts.length];
+        t2.textContent = texts[(textIndex + 1) % texts.length];
+      }
+      doMorph();
+    } else {
+      doCooldown();
+    }
+  }
+
+  requestAnimationFrame(animate);
+}());
+
+/* ── NAV: frosted glass on scroll ── */
+(function () {
+  var nav = document.getElementById('site-nav');
+  window.addEventListener('scroll', function () {
+    nav.classList.toggle('scrolled', window.scrollY > 72);
+  }, { passive: true });
+}());
+
+/* ── SCROLL REVEAL ── */
+(function () {
+  var io = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) {
+      if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
+    });
+  }, { threshold: 0.1, rootMargin: '0px 0px -48px 0px' });
+  document.querySelectorAll('.reveal').forEach(function (el) { io.observe(el); });
+}());
+</script>
+</body>
+</html>
