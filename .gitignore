@@ -2,5 +2,6 @@ node_modules/
 temporary screenshots/
 data/
 .claude/
+.vercel/
 config.json
 outfit.hellohello.is_.png
