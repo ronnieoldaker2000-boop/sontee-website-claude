@@ -34,7 +34,7 @@
       scroll-behavior: smooth;
     }
 
-    body { background: var(--bg); overflow-x: hidden; }
+    body { background: var(--bg); overflow: hidden; }
 
     img { -webkit-user-drag: none; user-drag: none; pointer-events: none; }
     .gate-btn, .atb-btn, .scroll-cue, .nav-bag, a { pointer-events: auto; }
@@ -1067,12 +1067,12 @@
       /* Scroll indicator stays visible */
       .scroll-cue-line { height: 40px; }
 
-      /* Fix logo mix-blend-mode on iOS Safari:
-         backdrop-filter on .gate-dot-overlay creates a stacking context that
-         prevents mix-blend-mode: screen from blending against the gate background. */
+      /* Logo fix: mix-blend-mode unreliable inside position:fixed on iOS Safari.
+         Pure black bg matches the inverted logo's black bg → seamless without blend mode. */
+      .gate { background: #000; }
+      .gate-solid-bg { background: #000; }
+      .gate-logo { mix-blend-mode: normal; }
       .gate-dot-overlay { -webkit-backdrop-filter: none; backdrop-filter: none; }
-      /* Fully opaque gate so no underlying page content bleeds through on scroll */
-      .gate { background: #060D1E; }
     }
   </style>
 </head>
