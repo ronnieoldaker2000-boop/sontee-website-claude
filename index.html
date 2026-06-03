@@ -1773,6 +1773,45 @@
 }());
 
 document.addEventListener('contextmenu', e => { if (e.target.tagName === 'IMG') e.preventDefault(); });
+
+/* ── LOGO: convert to white-on-transparent so it blends on any background ──
+   mix-blend-mode is unreliable on iOS Safari inside fixed/absolute containers.
+   We process the PNG directly: invert colours + set alpha from darkness of each pixel.
+   Result: white text on transparent bg, no blend mode dependency at all. ── */
+(function () {
+  function processLogo(img) {
+    if (img.dataset.logoProcessed) return;
+    img.dataset.logoProcessed = '1';
+    try {
+      var c = document.createElement('canvas');
+      c.width  = img.naturalWidth;
+      c.height = img.naturalHeight;
+      var ctx = c.getContext('2d');
+      ctx.drawImage(img, 0, 0);
+      var id = ctx.getImageData(0, 0, c.width, c.height);
+      var d  = id.data;
+      for (var i = 0; i < d.length; i += 4) {
+        var lum = d[i] * 0.299 + d[i+1] * 0.587 + d[i+2] * 0.114;
+        d[i]   = 255 - d[i];          // invert R
+        d[i+1] = 255 - d[i+1];        // invert G
+        d[i+2] = 255 - d[i+2];        // invert B
+        d[i+3] = Math.round(255 - lum); // dark pixel → opaque, bright pixel → transparent
+      }
+      ctx.putImageData(id, 0, 0);
+      img.src = c.toDataURL('image/png');
+      img.style.filter        = 'none';
+      img.style.webkitFilter  = 'none';
+      img.style.mixBlendMode  = 'normal';
+    } catch (e) {}
+  }
+
+  ['.gate-logo', '.hero-logo'].forEach(function (sel) {
+    var el = document.querySelector(sel);
+    if (!el) return;
+    if (el.complete && el.naturalWidth > 0) processLogo(el);
+    else el.addEventListener('load', function () { processLogo(el); }, { once: true });
+  });
+}());
 </script>
 </body>
 </html>
