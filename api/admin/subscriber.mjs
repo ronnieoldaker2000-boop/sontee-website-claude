@@ -1,4 +1,9 @@
-import { kv } from '@vercel/kv';
+import { Redis } from '@upstash/redis';
+
+const redis = new Redis({
+  url: process.env.KV_REST_API_URL,
+  token: process.env.KV_REST_API_TOKEN,
+});
 
 function authed(req) {
   const pw = process.env.ADMIN_PASSWORD ?? 'sontee2026';
@@ -12,11 +17,11 @@ export default async function handler(req, res) {
   const email = req.query?.email;
   if (!email) return res.status(400).json({ ok: false, msg: 'Email required.' });
 
-  const subs = (await kv.get('sontee:subscribers')) ?? [];
+  const subs = (await redis.get('sontee:subscribers')) ?? [];
   const filtered = subs.filter(s => s.email.toLowerCase() !== email.toLowerCase());
   if (filtered.length === subs.length)
     return res.status(404).json({ ok: false, msg: 'Not found.' });
 
-  await kv.set('sontee:subscribers', filtered);
+  await redis.set('sontee:subscribers', filtered);
   return res.status(200).json({ ok: true });
 }

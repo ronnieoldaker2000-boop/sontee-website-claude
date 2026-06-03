@@ -1,5 +1,10 @@
-import { kv } from '@vercel/kv';
+import { Redis } from '@upstash/redis';
 import nodemailer from 'nodemailer';
+
+const redis = new Redis({
+  url: process.env.KV_REST_API_URL,
+  token: process.env.KV_REST_API_TOKEN,
+});
 
 function authed(req) {
   const pw = process.env.ADMIN_PASSWORD ?? 'sontee2026';
@@ -30,7 +35,7 @@ export default async function handler(req, res) {
   if (!subject?.trim() || !message?.trim())
     return res.status(400).json({ ok: false, msg: 'Subject and message are required.' });
 
-  const subs = (await kv.get('sontee:subscribers')) ?? [];
+  const subs = (await redis.get('sontee:subscribers')) ?? [];
   if (!subs.length)
     return res.status(200).json({ ok: true, sent: 0, failed: 0, msg: 'No subscribers yet.' });
 
