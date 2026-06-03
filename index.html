@@ -32,9 +32,11 @@
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
       scroll-behavior: smooth;
+      height: 100%;
+      overflow: hidden;
     }
 
-    body { background: var(--bg); overflow: hidden; }
+    body { background: var(--bg); overflow: hidden; height: 100%; }
 
     img { -webkit-user-drag: none; user-drag: none; pointer-events: none; }
     .gate-btn, .atb-btn, .scroll-cue, .nav-bag, a { pointer-events: auto; }
@@ -54,7 +56,7 @@
 
     /* ── GATE ── */
     .gate {
-      position: fixed;
+      position: absolute;
       inset: 0;
       z-index: 10000;
       display: flex;
@@ -1067,11 +1069,7 @@
       /* Scroll indicator stays visible */
       .scroll-cue-line { height: 40px; }
 
-      /* Logo fix: mix-blend-mode unreliable inside position:fixed on iOS Safari.
-         Pure black bg matches the inverted logo's black bg → seamless without blend mode. */
-      .gate { background: #000; }
-      .gate-solid-bg { background: #000; }
-      .gate-logo { mix-blend-mode: normal; }
+      /* backdrop-filter creates a stacking context that can interfere with mix-blend-mode on mobile */
       .gate-dot-overlay { -webkit-backdrop-filter: none; backdrop-filter: none; }
     }
   </style>
